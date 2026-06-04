@@ -1,0 +1,86 @@
+name: WAY CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: way_test
+          POSTGRES_USER: way
+          POSTGRES_PASSWORD: way
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[dev]"
+
+      - name: Run migrations
+        env:
+          DATABASE_URL: postgres://way:way@localhost:5432/way_test
+          REDIS_URL: redis://localhost:6379/0
+        run: python manage.py migrate
+
+      - name: Run tests
+        env:
+          DATABASE_URL: postgres://way:way@localhost:5432/way_test
+          REDIS_URL: redis://localhost:6379/0
+          SECRET_KEY: test-secret-key
+        run: |
+          pytest --cov=way_core --cov=way_identity --cov=way_finance --cov=way_skills --cov=way_infra --cov=way_ops --cov-report=xml --cov-report=term
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+
+      - name: Run linting
+        run: |
+          ruff check .
+          mypy way_core way_identity way_finance way_skills way_infra way_ops
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run security scan
+        uses: securecodewarrior/github-action-add-sarif@v1
+
+  build:
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build -t way-backend:${{ github.sha }} .
+      - name: Push to registry
+        if: github.ref == 'refs/heads/main'
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+          docker tag way-backend:${{ github.sha }} way-backend:latest
+          docker push way-backend:latest

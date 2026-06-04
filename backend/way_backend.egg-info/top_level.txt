@@ -1,0 +1,7 @@
+way_core
+way_finance
+way_identity
+way_infra
+way_ops
+way_project
+way_skills

@@ -1,0 +1,90 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: way_db
+      POSTGRES_USER: way
+      POSTGRES_PASSWORD: way
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U way"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DEBUG: "False"
+      DB_HOST: postgres
+      DB_NAME: way_db
+      DB_USER: way
+      DB_PASSWORD: way
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: ${SECRET_KEY:-way-production-secret-key-2024}
+      JWT_SECRET: ${JWT_SECRET:-way-jwt-secret-2024}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./media:/app/media
+      - ./staticfiles:/app/staticfiles
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --noinput &&
+             gunicorn -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 way_project.asgi:application"
+
+  celery:
+    build: .
+    environment:
+      DEBUG: "False"
+      DB_HOST: postgres
+      DB_NAME: way_db
+      DB_USER: way
+      DB_PASSWORD: way
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: ${SECRET_KEY:-way-production-secret-key-2024}
+    depends_on:
+      - postgres
+      - redis
+    command: celery -A way_project worker -l info -c 4
+
+  celery-beat:
+    build: .
+    environment:
+      DEBUG: "False"
+      DB_HOST: postgres
+      DB_NAME: way_db
+      DB_USER: way
+      DB_PASSWORD: way
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: ${SECRET_KEY:-way-production-secret-key-2024}
+    depends_on:
+      - postgres
+      - redis
+    command: celery -A way_project beat -l info
+
+volumes:
+  postgres_data:
+  redis_data:
