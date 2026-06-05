@@ -3,7 +3,7 @@ WAY Authentication - JWT, Device Trust, Biometric, Wallet Auth
 """
 import uuid
 import hashlib
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone as datetime_timezone
 from typing import Optional, Tuple
 
 import jwt
@@ -83,14 +83,14 @@ class JWTService:
             "email": user.email,
             "scope": scope,
             "device_id": str(device.id) if device else None,
-            "iat": datetime.utcnow(),
-            "exp": datetime.utcnow() + timedelta(seconds=settings.WAY_CONFIG["JWT_ACCESS_LIFETIME"]),
+            "iat": datetime.now(datetime_timezone.utc),
+            "exp": datetime.now(datetime_timezone.utc) + timedelta(seconds=settings.WAY_CONFIG["JWT_ACCESS_LIFETIME"]),
             "type": "access",
         }
         refresh_payload = {
             "user_id": str(user.id),
-            "iat": datetime.utcnow(),
-            "exp": datetime.utcnow() + timedelta(seconds=settings.WAY_CONFIG["JWT_REFRESH_LIFETIME"]),
+            "iat": datetime.now(datetime_timezone.utc),
+            "exp": datetime.now(datetime_timezone.utc) + timedelta(seconds=settings.WAY_CONFIG["JWT_REFRESH_LIFETIME"]),
             "type": "refresh",
             "jti": str(uuid.uuid4()),
         }
@@ -127,8 +127,8 @@ class JWTService:
                 "user_id": str(user.id),
                 "email": user.email,
                 "scope": "full",
-                "iat": datetime.utcnow(),
-                "exp": datetime.utcnow() + timedelta(seconds=settings.WAY_CONFIG["JWT_ACCESS_LIFETIME"]),
+                "iat": datetime.now(datetime_timezone.utc),
+                "exp": datetime.now(datetime_timezone.utc) + timedelta(seconds=settings.WAY_CONFIG["JWT_ACCESS_LIFETIME"]),
                 "type": "access",
             }
             return jwt.encode(access_payload, settings.WAY_CONFIG["JWT_SECRET"], algorithm="HS256")

@@ -65,3 +65,4 @@ warn_unused_configs = true
 DJANGO_SETTINGS_MODULE = "way_project.settings"
 python_files = ["tests.py", "test_*.py", "*_tests.py"]
 addopts = "-v --tb=short"
+asyncio_default_fixture_loop_scope = "function"

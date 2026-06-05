@@ -1,4 +1,5 @@
 """WAY Finance Serializers"""
+from decimal import Decimal
 from rest_framework import serializers
 from .models import Wallet, CreditReserve, CreditLedger, Payment, CreditTransfer, BillingReport
 
@@ -52,7 +53,7 @@ class CreditTransferSerializer(serializers.ModelSerializer):
 class TransferCreateSerializer(serializers.Serializer):
     from_wallet_id = serializers.UUIDField()
     to_wallet_id = serializers.UUIDField()
-    amount = serializers.DecimalField(max_digits=20, decimal_places=2, min_value=0.01)
+    amount = serializers.DecimalField(max_digits=20, decimal_places=2, min_value=Decimal("0.01"))
     signature = serializers.CharField()
     description = serializers.CharField(required=False, allow_blank=True)
 

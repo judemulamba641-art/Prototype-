@@ -3,7 +3,7 @@ import pytest
 from django.conf import settings
 from rest_framework.test import APIClient
 import jwt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from way_identity.models import User
 from way_finance.models import Wallet
@@ -35,8 +35,8 @@ def auth_client(api_client, test_user):
         "user_id": str(test_user.id),
         "email": test_user.email,
         "scope": "full",
-        "iat": datetime.utcnow(),
-        "exp": datetime.utcnow() + timedelta(seconds=900),
+        "iat": datetime.now(timezone.utc),
+        "exp": datetime.now(timezone.utc) + timedelta(seconds=900),
         "type": "access",
     }
     access_token = jwt.encode(access_payload, settings.WAY_CONFIG["JWT_SECRET"], algorithm="HS256")
@@ -62,8 +62,8 @@ def admin_client(api_client, admin_user):
         "user_id": str(admin_user.id),
         "email": admin_user.email,
         "scope": "full",
-        "iat": datetime.utcnow(),
-        "exp": datetime.utcnow() + timedelta(seconds=900),
+        "iat": datetime.now(timezone.utc),
+        "exp": datetime.now(timezone.utc) + timedelta(seconds=900),
         "type": "access",
     }
     access_token = jwt.encode(access_payload, settings.WAY_CONFIG["JWT_SECRET"], algorithm="HS256")

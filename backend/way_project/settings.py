@@ -3,6 +3,7 @@ WAY Backend Settings - Production Ready
 Optimized architecture: 6 apps, unified configuration
 """
 import os
+import sys
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -12,6 +13,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-key-change-in-prod")
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
+TESTING = "pytest" in sys.argv[0] or os.getenv("TESTING", "False").lower() == "true"
 
 ALLOWED_HOSTS = ["*" if DEBUG else h for h in os.getenv("ALLOWED_HOSTS", "localhost").split(",")]
 
@@ -138,7 +140,11 @@ USE_TZ = True
 # Static files
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    }
+}
 
 # Media
 MEDIA_URL = "/media/"
@@ -179,7 +185,7 @@ CORS_ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://l
 CORS_ALLOW_CREDENTIALS = True
 
 # Security
-SECURE_SSL_REDIRECT = not DEBUG
+SECURE_SSL_REDIRECT = not DEBUG and not TESTING
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
@@ -187,8 +193,8 @@ SECURE_HSTS_PRELOAD = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 X_FRAME_OPTIONS = "DENY"
-SESSION_COOKIE_SECURE = not DEBUG
-CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SECURE = not DEBUG and not TESTING
+CSRF_COOKIE_SECURE = not DEBUG and not TESTING
 
 # WAY Configuration
 WAY_CONFIG = {

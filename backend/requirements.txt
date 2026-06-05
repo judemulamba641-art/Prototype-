@@ -14,7 +14,7 @@ drf-spectacular==0.28.0
 # Authentication & Security
 PyJWT==2.10.1
 argon2-cffi==23.1.0
-cryptography==44.0.0
+cryptography==48.0.0
 pyotp==2.9.0
 
 # Database
@@ -86,7 +86,7 @@ types-requests==2.32.0.20241016
 # =====================================================
 
 bandit==1.8.0
-safety==3.2.14
+safety==3.8.1
 
 # =====================================================
 # Developer Experience
