@@ -16,4 +16,5 @@ urlpatterns = [
     path("api/skills/", include("way_skills.urls")),
     path("api/ops/", include("way_ops.urls")),
     path("api/infra/", include("way_infra.urls")),
+    path("api/user/", include("way_user.urls")),
 ]

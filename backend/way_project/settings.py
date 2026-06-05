@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     "way_skills",
     "way_infra",
     "way_ops",
+    "way_user",
 ]
 
 TEMPLATES = [
